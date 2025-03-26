@@ -1,0 +1,62 @@
+{% extends "chat/base.html" %}
+
+{% block title %}Chat History{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chat-history-container {
+    display: flex;
+    height: 90vh;
+  }
+  .chat-list {
+    width: 30%;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+  }
+  .chat-list-item {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+  .chat-list-item:hover {
+    background-color: #e9ecef;
+  }
+  .chat-content {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid chat-history-container">
+  <!-- Chat List Sidebar -->
+  <div class="chat-list">
+    <!-- In a real app, this would be populated dynamically from the database -->
+    <a href="{% url 'chatroom' room_name='room1' %}" class="text-decoration-none text-dark">
+      <div class="chat-list-item">
+        <strong>John Doe</strong>
+        <p class="mb-0 text-muted">Hey, are you coming to the meeting?</p>
+      </div>
+    </a>
+    <a href="{% url 'chatroom' room_name='room2' %}" class="text-decoration-none text-dark">
+      <div class="chat-list-item">
+        <strong>Jane Smith</strong>
+        <p class="mb-0 text-muted">Let’s catch up later!</p>
+      </div>
+    </a>
+    <a href="{% url 'chatroom' room_name='room3' %}" class="text-decoration-none text-dark">
+      <div class="chat-list-item">
+        <strong>Group Chat</strong>
+        <p class="mb-0 text-muted">New files uploaded</p>
+      </div>
+    </a>
+  </div>
+  <!-- Placeholder Chat Content Area -->
+  <div class="chat-content">
+    <h4>Select a chat to view conversation</h4>
+  </div>
+</div>
+{% endblock %}
