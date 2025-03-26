@@ -1,9 +1,12 @@
 import json
+import bleach
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from cryptography.fernet import Fernet
+from django.conf import settings
 from django.utils.timezone import now
 
-from chat.models import Channel, Message
+from chat.models import Channel, Message, ChannelMembership
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -30,6 +33,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if not await self.channel_exists():
             await self.send_error("Invalid channel ID. Connection closed.", close_connection=True)
+            return
+
+        is_member = await ChannelMembership.objects.filter(channel_id=self.channel_id, user=self.user).aexists()
+        if not is_member:
+            await self.send_error("Not authorized to access this channel.", close_connection=True)
             return
 
         # Join the chat room
@@ -77,7 +85,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             # Save message to database
-            message_obj = await self.save_message(message)
+            message_content = bleach.clean(message)
+            message_obj = await self.save_message(message_content)
 
             # Broadcast message to group
             await self.channel_layer.group_send(
@@ -113,10 +122,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return await Channel.objects.filter(id=self.channel_id).aexists()
 
     async def save_message(self, message_content):
-        """Save message to database."""
+        """Encrypt and save message to the database."""
+        fernet = Fernet(settings.FERNET_KEY)
+        encrypted_content = fernet.encrypt(message_content.encode())
+        encrypted_content_str = encrypted_content.decode('utf-8')
+
         channel = await Channel.objects.aget(id=self.channel_id)
         return await Message.objects.acreate(
             channel=channel,
             sender=self.user,
-            content=message_content
+            content=encrypted_content_str
         )
